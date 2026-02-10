@@ -10,31 +10,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const TEMPLATES_DIR = join(__dirname, 'templates');
 
-const CORE_CATEGORIES = [
-  'access-control',
-  'security-config',
-  'supply-chain',
-  'cryptographic',
-  'injection',
-  'secure-design',
-  'authentication',
-  'data-integrity',
-  'logging-alerting',
-  'error-handling',
-];
-
-const FRONTEND_CATEGORIES = [
-  'xss-prevention',
-  'csrf-protection',
-  'csp',
-  'secure-state',
-];
+const CATEGORY_DIRS = {
+  // OWASP Top 10 2025
+  'access-control': 'core',
+  'security-config': 'core',
+  'supply-chain': 'core',
+  'cryptographic': 'core',
+  'injection': 'core',
+  'secure-design': 'core',
+  'authentication': 'core',
+  'data-integrity': 'core',
+  'logging-alerting': 'core',
+  'error-handling': 'core',
+  // Frontend
+  'xss-prevention': 'frontend',
+  'csrf-protection': 'frontend',
+  'csp': 'frontend',
+  'secure-state': 'frontend',
+  // TypeScript
+  'typescript-security': 'typescript',
+  // Frameworks
+  'react-security': 'frameworks',
+  'express-security': 'frameworks',
+  'nextjs-security': 'frameworks',
+};
 
 /**
  * Load a single template file by category name
  */
 export async function loadTemplate(category) {
-  const subdir = CORE_CATEGORIES.includes(category) ? 'core' : 'frontend';
+  const subdir = CATEGORY_DIRS[category];
+  if (!subdir) {
+    console.warn(`Warning: Template not found: ${category}`);
+    return null;
+  }
   const filePath = join(TEMPLATES_DIR, subdir, `${category}.md`);
   try {
     return await readFile(filePath, 'utf-8');
@@ -80,6 +89,10 @@ export function getCategoryInfo(category) {
     'csrf-protection': { owasp: 'FE-02', title: 'CSRF Protection', group: 'frontend' },
     'csp': { owasp: 'FE-03', title: 'Content Security Policy', group: 'frontend' },
     'secure-state': { owasp: 'FE-04', title: 'Secure State Management', group: 'frontend' },
+    'typescript-security': { owasp: 'TS-01', title: 'TypeScript Security', group: 'typescript' },
+    'react-security': { owasp: 'FW-01', title: 'React Security', group: 'frameworks' },
+    'express-security': { owasp: 'FW-02', title: 'Express Security', group: 'frameworks' },
+    'nextjs-security': { owasp: 'FW-03', title: 'Next.js Security', group: 'frameworks' },
   };
   return info[category] || { owasp: '??', title: category, group: 'unknown' };
 }

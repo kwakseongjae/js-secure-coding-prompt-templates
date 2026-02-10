@@ -60,6 +60,12 @@ export async function run() {
     return;
   }
 
+  // --remove flag
+  if (args.includes('--remove')) {
+    await removeRules();
+    return;
+  }
+
   const dryRun = args.includes('--dry-run');
   const config = await promptUser(args);
 
@@ -229,6 +235,72 @@ function dryRunPreview(adapter, toolName, config, templates, options, cwd) {
   console.log(`── ${t('dryRunApply')} ───────────────────\n`);
 }
 
+async function removeRules() {
+  const cwd = process.cwd();
+  const SECTION_START = '<!-- js-secure-coding:start -->';
+  const SECTION_END = '<!-- js-secure-coding:end -->';
+  let removed = 0;
+
+  // 1. Clean markers from single-file tools
+  const singleFiles = ['CLAUDE.md', '.github/copilot-instructions.md', 'AGENTS.md'];
+  for (const file of singleFiles) {
+    const filePath = join(cwd, file);
+    if (!existsSync(filePath)) continue;
+    const content = await readFile(filePath, 'utf-8');
+    if (!content.includes(SECTION_START)) continue;
+
+    const before = content.substring(0, content.indexOf(SECTION_START));
+    const after = content.substring(
+      content.indexOf(SECTION_END) + SECTION_END.length
+    );
+    const cleaned = (before.trimEnd() + '\n' + after.trimStart()).trim();
+
+    if (cleaned) {
+      await writeFile(filePath, cleaned + '\n', 'utf-8');
+      console.log(`🗑️  ${t('removedMarkers', file)}`);
+    } else {
+      const { unlink } = await import('node:fs/promises');
+      await unlink(filePath);
+      console.log(`🗑️  ${t('removedFile', file)}`);
+    }
+    removed++;
+  }
+
+  // 2. Remove security-* files from rule directories
+  const ruleDirs = [
+    { dir: '.cursor/rules', ext: '.mdc' },
+    { dir: '.windsurf/rules', ext: '.md' },
+    { dir: '.claude/rules', ext: '.md' },
+    { dir: '.github/instructions', ext: '.md' },
+  ];
+
+  for (const { dir, ext } of ruleDirs) {
+    const dirPath = join(cwd, dir);
+    if (!existsSync(dirPath)) continue;
+
+    const { readdir, unlink } = await import('node:fs/promises');
+    const files = await readdir(dirPath);
+    const securityFiles = files.filter(
+      (f) => f.startsWith('security-') && f.endsWith(ext)
+    );
+
+    for (const file of securityFiles) {
+      await unlink(join(dirPath, file));
+      removed++;
+    }
+
+    if (securityFiles.length > 0) {
+      console.log(`🗑️  ${t('removedDir', securityFiles.length, dir)}`);
+    }
+  }
+
+  if (removed === 0) {
+    console.log(`\n${t('noRulesFound')}`);
+  } else {
+    console.log(`\n✅ ${t('removeSuccess')}`);
+  }
+}
+
 function printHelp(version) {
   console.log(`
 secure-coding-rules v${version}
@@ -240,12 +312,14 @@ Usage:
   npx secure-coding-rules --yes        Smart defaults
   npx secure-coding-rules --check      Project status
   npx secure-coding-rules --dry-run    Preview
+  npx secure-coding-rules --remove     Remove all generated rules
   npx secure-coding-rules --lang ko    한국어로 실행
 
 Options:
   -y, --yes      Non-interactive mode
   --check        Show detected AI tools and frameworks
   --dry-run      Preview without writing files
+  --remove       Remove all security rules (clean uninstall)
   --lang <code>  Language: en (default), ko
   -h, --help     Show this help
   -v, --version  Show version

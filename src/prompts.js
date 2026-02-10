@@ -100,6 +100,10 @@ export const SECURITY_CATEGORIES = [
   { label: 'Frontend: CSRF Protection', value: 'csrf-protection' },
   { label: 'Frontend: CSP', value: 'csp' },
   { label: 'Frontend: Secure State Management', value: 'secure-state' },
+  { label: 'TypeScript Security', value: 'typescript-security' },
+  { label: 'Framework: React / Next.js', value: 'react-security' },
+  { label: 'Framework: Express / Node.js', value: 'express-security' },
+  { label: 'Framework: Next.js (App Router)', value: 'nextjs-security' },
 ];
 
 // ─── Project state detection ─────────────────────────────────────
@@ -276,5 +280,30 @@ export async function promptUser(args) {
     });
   }
 
+  // Auto-include framework-specific and TypeScript rules
+  autoIncludeExtras(categories, framework);
+
   return { tools, outputMode, framework, categories, includeFrontend };
+}
+
+/**
+ * Auto-include TypeScript and framework-specific rules based on selection
+ */
+function autoIncludeExtras(categories, framework) {
+  // Always include TypeScript rules (most JS projects use TS now)
+  if (!categories.includes('typescript-security')) {
+    categories.push('typescript-security');
+  }
+
+  const frameworkMap = {
+    react: ['react-security', 'nextjs-security'],
+    vue: [],
+    node: ['express-security'],
+    vanilla: [],
+  };
+
+  const extras = frameworkMap[framework] || [];
+  extras.forEach((c) => {
+    if (!categories.includes(c)) categories.push(c);
+  });
 }
