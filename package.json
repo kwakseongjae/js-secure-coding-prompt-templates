@@ -1,0 +1,64 @@
+{
+  "name": "secure-coding-rules",
+  "version": "2.0.0",
+  "description": "OWASP 2025 security rules for AI coding assistants. Auto-apply to CLAUDE.md, Cursor, Windsurf, Copilot, AGENTS.md with one command.",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./loader": "./src/loader.js"
+  },
+  "bin": {
+    "secure-coding-rules": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js",
+    "test": "node --test src/__tests__/*.test.js"
+  },
+  "keywords": [
+    "security",
+    "owasp",
+    "owasp-top-10",
+    "secure-coding",
+    "javascript",
+    "typescript",
+    "claude",
+    "claude-md",
+    "cursor",
+    "cursorrules",
+    "windsurf",
+    "copilot",
+    "agents-md",
+    "ai-coding",
+    "code-security",
+    "security-rules",
+    "xss",
+    "csrf",
+    "injection",
+    "access-control"
+  ],
+  "author": {
+    "name": "Gwak Seong-jae",
+    "url": "https://github.com/kwakseongjae"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kwakseongjae/js-secure-coding-prompt-templates.git"
+  },
+  "homepage": "https://github.com/kwakseongjae/js-secure-coding-prompt-templates#readme",
+  "bugs": {
+    "url": "https://github.com/kwakseongjae/js-secure-coding-prompt-templates/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module",
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,63 +1,168 @@
-# JavaScript Secure Coding Prompt Templates
+# secure-coding-rules
 
-AI 솔루션을 활용한 안전한 자바스크립트 코딩을 위한 프롬프트 템플릿 모음입니다. 이 템플릿들은 [구글의 프롬프트 엔지니어링 베스트 프랙티스](https://www.kaggle.com/whitepaper-prompt-engineering)와 [자바스크립트 시큐어 코딩 가이드](https://www.kisa.or.kr/2060204/form?postSeq=14&page=1)를 기반으로 작성되었습니다.
+[![npm version](https://img.shields.io/npm/v/secure-coding-rules.svg)](https://www.npmjs.com/package/secure-coding-rules)
+[![license](https://img.shields.io/npm/l/secure-coding-rules.svg)](https://github.com/kwakseongjae/js-secure-coding-prompt-templates/blob/main/LICENSE)
+[![node](https://img.shields.io/node/v/secure-coding-rules.svg)](https://nodejs.org)
 
-## 개요
+**OWASP Top 10 2025** 기반 JavaScript/TypeScript 보안 코딩 룰을 AI 코딩 어시스턴트에 자동 적용하는 CLI 도구입니다.
 
-이 저장소는 다양한 AI 코딩 도구를 활용하여 안전한 자바스크립트 코드를 작성하는 데 도움이 되는 구조화된 프롬프트 템플릿을 제공합니다. 각 템플릿은 보안 취약점을 식별하고, 안전한 대안을 제시하며, 보안 모범 사례를 구현하는 데 중점을 둡니다.
+`npx secure-coding-rules` 한 줄이면 프로젝트의 CLAUDE.md, .cursor/rules, .windsurf/rules, copilot-instructions.md, AGENTS.md에 보안 룰이 적용됩니다.
 
-## 템플릿
+---
 
-이 저장소는 세 가지 주요 AI 도구를 위한 템플릿을 포함하고 있습니다:
+## Quick Start
 
-### 1. Claude JavaScript Secure Coding Template
-[Claude](claude-js-security-template.md)를 위한 템플릿으로, 입력 검증, 인증 및 권한 부여, 데이터 보호, 프런트엔드 보안, 종속성 관리와 같은 주요 보안 영역을 포괄합니다. 이 템플릿은 보안 요구 사항을 유지하면서 가독성, 예측 가능성, 응집력, 낮은 결합도와 같은 프런트엔드 디자인 원칙을 적용하는 방법에 대한 지침을 제공합니다.
-
-### 2. GPT JavaScript Secure Coding Template
-[GPT](gpt-js-security-template.md)를 위한 템플릿으로, 포괄적인 취약점 평가, 보안 구현 패턴, 아키텍처 및 디자인 보안 개선 사항을 제공합니다. 이 템플릿은 체계적인 응답 형식과 상세한 보안 체크리스트를 포함하여 GPT의 응답이 실용적이고 실행 가능한 보안 권장 사항을 제공하도록 설계되었습니다.
-
-### 3. Cursor JavaScript Secure Coding Template
-[Cursor](cursor-js-security-template.md)를 위한 템플릿으로, 코드 주석 형식으로 작성되어 Cursor의 코드 분석 기능과 원활하게 통합됩니다. 이 템플릿은 입력 검증, 인증, 데이터 처리, 종속성 관리, 클라이언트 측 보안, 오류 처리, 보안 테스트와 같은 영역을 다루며 각 영역에 대한 예제와 패턴을 포함합니다.
-
-## 사용 방법
-
-1. GPT 및 Claude 사용 방법:
-   - 해당하는 템플릿 파일을 엽니다.
-   - 템플릿 내용을 복사합니다.
-   - 플레이스홀더 값(${project_type}, ${code} 등)을 실제 프로젝트 정보로 바꿉니다 (바꾸지 않아도 문제는 없습니다).
-   - 완성된 프롬프트를 해당 AI 도구에 붙여넣고 응답을 받습니다.
-
-2. Cursor 사용 방법:
-   - Cursor 에디터에서 템플릿 파일을 엽니다.
-   - 템플릿을 커서 규칙(Cursor Rule)으로 등록합니다:
-     - 명령 팔레트(Cmd/Ctrl+Shift+P)를 열고 "Add Rule"을 검색합니다.
-     - 템플릿 내용을 규칙으로 붙여넣고 이름을 지정합니다.
-   - 코드 작성 시 등록된 규칙을 적용하여 보안 가이드라인에 따라 코딩합니다.
-
-## 템플릿 사용 예시
-
-```javascript
-// 보안 분석이 필요한 코드 예시
-function processUserInput(input) {
-  document.getElementById('output').innerHTML = input;
-}
-
-function storeCredentials(user, password) {
-  localStorage.setItem('user_creds', JSON.stringify({ user, password }));
-}
+```bash
+npx secure-coding-rules
 ```
 
-위와 같은 코드를 제공하면 AI 도구는 XSS 취약점과 안전하지 않은 자격 증명 저장 문제를 식별하고, 안전한 대안을 제시합니다.
+인터랙티브 프롬프트:
+1. AI 도구 선택 (Claude Code / Cursor / Windsurf / Copilot / AGENTS.md)
+2. 프레임워크 선택 (React / Vue / Node.js / Vanilla) - **자동 감지됨**
+3. 보안 카테고리 선택 (전체 또는 개별)
 
-## 기여하기
+### Auto Mode
 
-이 프롬프트 템플릿을 개선하거나 새로운 AI 도구를 위한 템플릿을 추가하거나, 내용을 수정하고 싶으시다면 언제든지 PR을 보내주세요. 여러분의 모든 기여를 환영합니다!
+프로젝트를 분석하여 자동으로 최적의 설정을 적용합니다:
+
+```bash
+npx secure-coding-rules --yes
+```
+
+- 기존 AI 도구 설정 파일이 있으면 자동 감지 후 업데이트
+- package.json에서 프레임워크 자동 감지 (React, Vue, Node.js 등)
+- CI/CD 등 non-interactive 환경에서도 동작
+
+### Status Check
+
+현재 프로젝트의 보안 룰 상태만 확인:
+
+```bash
+npx secure-coding-rules --check
+```
+
+## 지원 AI 도구
+
+| AI Tool | Output | 기존 파일 |
+|---------|--------|----------|
+| **Claude Code** | `CLAUDE.md` | 자동 병합 |
+| **Cursor** | `.cursor/rules/*.mdc` | 개별 파일 생성 |
+| **Windsurf** | `.windsurf/rules/*.md` | 개별 파일 생성 |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | 자동 병합 |
+| **AGENTS.md** | `AGENTS.md` | 자동 병합 |
+
+## 보안 카테고리 (OWASP Top 10 2025)
+
+| Code | Category | Description |
+|------|----------|-------------|
+| A01 | Broken Access Control | RBAC/ABAC, IDOR 방지, 서버사이드 인가 |
+| A02 | Security Misconfiguration | 보안 헤더, CORS, 환경변수 관리 |
+| A03 | Supply Chain Failures | npm audit, lockfile 무결성, SRI **(2025 신규)** |
+| A04 | Cryptographic Failures | 안전한 해싱, 암호화, 키 관리 |
+| A05 | Injection | XSS, SQLi, NoSQLi, Command Injection |
+| A06 | Insecure Design | Threat modeling, 최소 권한 원칙 |
+| A07 | Authentication Failures | MFA, 세션 관리, 패스워드 정책 |
+| A08 | Data Integrity Failures | SRI, 안전한 역직렬화, CI/CD 보안 |
+| A09 | Logging & Alerting | 보안 로깅, 민감정보 마스킹, 알림 |
+| A10 | Error Handling | Fail-safe 기본값, 에러 정보 노출 방지 **(2025 신규)** |
+
+### Frontend Modules
+
+| Code | Category | Description |
+|------|----------|-------------|
+| FE-01 | XSS Prevention | DOM 조작 보안, sanitization |
+| FE-02 | CSRF Protection | 토큰 기반 방어, SameSite 쿠키 |
+| FE-03 | Content Security Policy | CSP 헤더, nonce, 리포팅 |
+| FE-04 | Secure State | 안전한 상태관리, 메모리 내 토큰 |
+
+## 동작 방식
+
+### 룰 형식
+
+모든 보안 룰은 AI가 이해하기 쉬운 일관된 구조를 따릅니다:
+
+```markdown
+### 1. Rule Title
+- **DO**: 구체적으로 해야 할 것
+- **DON'T**: 하지 말아야 할 것
+- **WHY**: 왜 중요한지
+
+## Code Examples
+### Bad Practice / Good Practice
+
+## Quick Checklist
+- [ ] 체크리스트 항목
+```
+
+### 기존 파일 병합
+
+이미 CLAUDE.md 등이 있으면 기존 내용을 보존하고 보안 섹션만 추가/업데이트합니다:
+
+```html
+<!-- js-secure-coding:start -->
+(이 영역만 업데이트됨)
+<!-- js-secure-coding:end -->
+```
+
+다시 실행하면 해당 영역만 최신 버전으로 교체됩니다.
+
+### 프로젝트 자동 감지
+
+`secure-coding-rules`는 실행 시 현재 프로젝트를 분석합니다:
+
+- **AI 도구 감지**: CLAUDE.md, .cursor/, .windsurf/, .github/ 존재 여부 확인
+- **프레임워크 감지**: package.json의 dependencies에서 React/Vue/Express 등 파악
+- **상태 표시**: 인터랙티브 모드에서 감지 결과를 보여주고, 관련 항목을 우선 추천
+
+## 수동 사용
+
+CLI 없이 `src/templates/` 마크다운 파일을 직접 복사하여 사용 가능합니다:
+
+```
+src/templates/
+├── core/           # OWASP Top 10 2025 (A01-A10)
+│   ├── access-control.md
+│   ├── authentication.md
+│   ├── cryptographic.md
+│   ├── data-integrity.md
+│   ├── error-handling.md
+│   ├── injection.md
+│   ├── logging-alerting.md
+│   ├── secure-design.md
+│   ├── security-config.md
+│   └── supply-chain.md
+└── frontend/       # Frontend 특화 보안 룰
+    ├── xss-prevention.md
+    ├── csrf-protection.md
+    ├── csp.md
+    └── secure-state.md
+```
+
+## CLI Options
+
+```
+npx secure-coding-rules              인터랙티브 모드 (자동 감지)
+npx secure-coding-rules --yes        스마트 기본값으로 자동 적용
+npx secure-coding-rules --check      프로젝트 보안 상태 확인
+npx secure-coding-rules --help       도움말
+npx secure-coding-rules --version    버전
+```
+
+## Legacy Templates
+
+v1.0 원본 템플릿은 `legacy/` 디렉토리에 보존되어 있습니다.
 
 ## 참고 자료
 
-- [Google의 프롬프트 엔지니어링 베스트 프랙티스](https://www.kaggle.com/whitepaper-prompt-engineering)
-- [자바스크립트 시큐어 코딩 가이드](https://www.kisa.or.kr/2060204/form?postSeq=14&page=1)
+- [OWASP Top 10 2025](https://owasp.org/Top10/2025/)
+- [Node.js Security Best Practices](https://nodejs.org/en/learn/getting-started/security-best-practices)
+- [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/IndexTopTen.html)
+- [JavaScript Secure Coding Guide (KISA)](https://www.kisa.or.kr/2060204/form?postSeq=14&page=1)
 
-## 라이선스
+## Contributing
 
-이 프로젝트는 MIT 라이선스 하에 있습니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+PR을 환영합니다! 새로운 보안 룰, AI 도구 어댑터, 기존 내용 개선 등.
+
+## License
+
+[MIT](LICENSE) - 곽성재 (Gwak Seong-jae)

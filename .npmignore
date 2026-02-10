@@ -1,0 +1,6 @@
+.git/
+.github/
+legacy/
+.DS_Store
+*.log
+.claude/
