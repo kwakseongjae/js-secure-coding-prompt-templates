@@ -176,4 +176,4 @@ PRs welcome! New security rules, AI tool adapters, or improvements to existing c
 
 ## License
 
-[MIT](LICENSE) - 곽성재 (Gwak Seong-jae)
+[MIT](LICENSE)

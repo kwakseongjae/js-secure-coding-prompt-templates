@@ -1,6 +1,6 @@
 {
   "name": "secure-coding-rules",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "OWASP 2025 security rules for AI coding assistants. Auto-apply to CLAUDE.md, Cursor, Windsurf, Copilot, AGENTS.md with one command.",
   "main": "src/index.js",
   "exports": {
