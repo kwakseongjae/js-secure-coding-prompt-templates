@@ -1,22 +1,15 @@
 /**
- * secure-rules - OWASP 2025 Security Rules Generator for AI Coding Assistants
- *
- * Generates security coding rules in the format of your preferred AI tool:
- * - CLAUDE.md (Claude Code)
- * - .cursor/rules/*.mdc (Cursor)
- * - .windsurf/rules/*.md (Windsurf)
- * - .github/copilot-instructions.md (GitHub Copilot)
- * - AGENTS.md (vendor-neutral)
+ * secure-coding-rules - OWASP 2025 Security Rules Generator for AI Coding Assistants
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { initLang, t } from './i18n.js';
 import { promptUser } from './prompts.js';
 import { loadTemplates } from './loader.js';
 
-// Adapter imports
 import * as claudeAdapter from './adapters/claude.js';
 import * as cursorAdapter from './adapters/cursor.js';
 import * as windsurfAdapter from './adapters/windsurf.js';
@@ -49,13 +42,14 @@ export async function run() {
   const args = process.argv.slice(2);
   const version = getVersion();
 
-  // Help flag
+  // Init i18n before anything else
+  initLang(args);
+
   if (args.includes('--help') || args.includes('-h')) {
     printHelp(version);
     return;
   }
 
-  // Version flag
   if (args.includes('--version') || args.includes('-v')) {
     console.log(`secure-coding-rules v${version}`);
     return;
@@ -64,26 +58,25 @@ export async function run() {
   const dryRun = args.includes('--dry-run');
   const config = await promptUser(args);
 
-  // --check returns null to signal early exit
   if (config === null) return;
 
   const adapter = adapters[config.tool];
 
-  console.log(`\nLoading security templates...`);
+  console.log(`\n${t('loading')}`);
   const templates = await loadTemplates(config.categories);
 
   if (templates.size === 0) {
-    console.error('No templates found. Please check your installation.');
+    console.error(t('noTemplates'));
     process.exit(1);
   }
 
-  console.log(`Loaded ${templates.size} security rule modules.`);
+  console.log(t('loaded', templates.size));
 
   const cwd = process.cwd();
   const options = { framework: config.framework, version };
 
   if (dryRun) {
-    await dryRunPreview(adapter, config, templates, options, cwd);
+    dryRunPreview(adapter, config, templates, options, cwd);
     return;
   }
 
@@ -95,9 +88,9 @@ export async function run() {
     await generateSingleFile(adapter, templates, options, cwd);
   }
 
-  console.log('\n✅ Security rules generated successfully!');
-  console.log('📖 Based on OWASP Top 10 2025 (https://owasp.org/Top10/2025/)');
-  console.log('\nRun again anytime to update: npx secure-coding-rules\n');
+  console.log(`\n✅ ${t('success')}`);
+  console.log(`📖 ${t('reference')}`);
+  console.log(`\n${t('runAgain')}\n`);
 }
 
 async function generateSingleFile(adapter, templates, options, cwd) {
@@ -114,10 +107,10 @@ async function generateSingleFile(adapter, templates, options, cwd) {
     const existing = await readFile(outputPath, 'utf-8');
     const merged = adapter.merge(existing, newContent);
     await writeFile(outputPath, merged, 'utf-8');
-    console.log(`\n📝 Updated: ${adapter.outputPath} (merged with existing content)`);
+    console.log(`\n📝 ${t('updated', adapter.outputPath)}`);
   } else {
     await writeFile(outputPath, newContent, 'utf-8');
-    console.log(`\n📝 Created: ${adapter.outputPath}`);
+    console.log(`\n📝 ${t('created', adapter.outputPath)}`);
   }
 }
 
@@ -137,19 +130,19 @@ async function generateMultipleFiles(adapter, templates, options, cwd) {
     count++;
   }
 
-  console.log(`\n📝 Generated ${count} files in ${adapter.outputDir}/`);
+  console.log(`\n📝 ${t('generated', count, adapter.outputDir)}`);
 }
 
-async function dryRunPreview(adapter, config, templates, options, cwd) {
-  console.log('\n── Dry Run Preview ──────────────────────────────────');
-  console.log(`Tool:       ${adapter.name}`);
-  console.log(`Framework:  ${config.framework}`);
-  console.log(`Categories: ${config.categories.length}`);
+function dryRunPreview(adapter, config, templates, options, cwd) {
+  console.log(`\n── ${t('dryRunTitle')} ──────────────────────────────────`);
+  console.log(`${t('dryRunTool')}       ${adapter.name}`);
+  console.log(`${t('dryRunFramework')}  ${config.framework}`);
+  console.log(`${t('dryRunCategories')} ${config.categories.length}`);
 
   if (config.tool === 'cursor' || config.tool === 'windsurf') {
     const multiAdapter = config.tool === 'cursor' ? cursorAdapter : windsurfAdapter;
     const files = multiAdapter.formatMultiple(templates, options);
-    console.log(`\nWould generate ${files.size} files in ${multiAdapter.outputDir}/:`);
+    console.log(`\n${t('dryRunWouldGenerate', files.size, multiAdapter.outputDir)}`);
     for (const [filename] of files) {
       console.log(`  - ${filename}`);
     }
@@ -157,29 +150,33 @@ async function dryRunPreview(adapter, config, templates, options, cwd) {
     const outputPath = join(cwd, adapter.outputPath);
     const content = adapter.format(templates, options);
     const exists = existsSync(outputPath);
-    console.log(`\nWould ${exists ? 'update' : 'create'}: ${adapter.outputPath}`);
-    console.log(`Content size: ${(content.length / 1024).toFixed(1)} KB`);
+    console.log(
+      `\n${exists ? t('dryRunWouldUpdate', adapter.outputPath) : t('dryRunWouldCreate', adapter.outputPath)}`
+    );
+    console.log(t('dryRunSize', (content.length / 1024).toFixed(1)));
   }
 
-  console.log('\n── Run without --dry-run to apply ───────────────────\n');
+  console.log(`\n── ${t('dryRunApply')} ───────────────────\n`);
 }
 
 function printHelp(version) {
   console.log(`
 secure-coding-rules v${version}
 
-OWASP 2025 기반 JavaScript 보안 코딩 룰을 AI 코딩 어시스턴트에 자동 적용
+${t('helpDesc')}
 
 Usage:
-  npx secure-coding-rules              Interactive mode (auto-detects project)
-  npx secure-coding-rules --yes        Apply all rules with smart defaults
-  npx secure-coding-rules --check      Show current project security status
-  npx secure-coding-rules --dry-run    Preview without writing files
+  npx secure-coding-rules              Interactive mode
+  npx secure-coding-rules --yes        Smart defaults
+  npx secure-coding-rules --check      Project status
+  npx secure-coding-rules --dry-run    Preview
+  npx secure-coding-rules --lang ko    한국어로 실행
 
 Options:
-  -y, --yes      Non-interactive mode (auto-detects tool & framework)
-  --check        Show which AI tools and frameworks are detected
-  --dry-run      Preview what would be generated without writing
+  -y, --yes      Non-interactive mode
+  --check        Show detected AI tools and frameworks
+  --dry-run      Preview without writing files
+  --lang <code>  Language: en (default), ko
   -h, --help     Show this help
   -v, --version  Show version
 
@@ -190,19 +187,7 @@ Supported AI Tools:
   - GitHub Copilot → .github/copilot-instructions.md
   - AGENTS.md      → AGENTS.md (vendor-neutral)
 
-Security Categories (OWASP Top 10 2025):
-  A01: Broken Access Control
-  A02: Security Misconfiguration
-  A03: Supply Chain Failures (NEW in 2025)
-  A04: Cryptographic Failures
-  A05: Injection
-  A06: Insecure Design
-  A07: Authentication Failures
-  A08: Data Integrity Failures
-  A09: Logging & Alerting Failures
-  A10: Error Handling (NEW in 2025)
-
-  + Frontend: XSS, CSRF, CSP, Secure State Management
+OWASP Top 10 2025: A01-A10 + Frontend (XSS, CSRF, CSP, State)
 
 Homepage: https://github.com/kwakseongjae/js-secure-coding-prompt-templates
 `);

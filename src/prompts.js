@@ -6,6 +6,7 @@
 import { createInterface } from 'node:readline';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { t } from './i18n.js';
 
 // ─── Readline helpers ────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ function ask(question) {
 
 function printOptions(options) {
   options.forEach((opt, i) => {
-    const marker = opt.detected ? ' (detected)' : '';
+    const marker = opt.detected ? ` (${t('detected')})` : '';
     console.log(`  ${i + 1}) ${opt.label}${marker}`);
   });
 }
@@ -32,20 +33,18 @@ function printOptions(options) {
 async function selectOne(question, options) {
   console.log(`\n${question}`);
   printOptions(options);
-  const answer = await ask(`\nSelect (1-${options.length}): `);
+  const answer = await ask(`\n${t('selectPrompt')} (1-${options.length}): `);
   const idx = parseInt(answer, 10) - 1;
   if (idx >= 0 && idx < options.length) return options[idx].value;
-  console.log('Invalid selection, defaulting to first option.');
+  console.log(t('invalidSelection'));
   return options[0].value;
 }
 
 async function selectMultiple(question, options) {
   console.log(`\n${question}`);
   printOptions(options);
-  console.log(`  0) All`);
-  const answer = await ask(
-    `\nSelect (comma-separated, e.g. 1,3,5 or 0 for all): `
-  );
+  console.log(`  0) ${t('selectAll')}`);
+  const answer = await ask(`\n${t('selectPrompt')} (${t('selectAllComma')}): `);
 
   if (answer === '0' || answer.toLowerCase() === 'all') {
     return options.map((o) => o.value);
@@ -57,7 +56,7 @@ async function selectMultiple(question, options) {
     .filter((i) => i >= 0 && i < options.length);
 
   if (indices.length === 0) {
-    console.log('No valid selection, selecting all.');
+    console.log(t('noValidSelection'));
     return options.map((o) => o.value);
   }
 
@@ -105,12 +104,6 @@ export const SECURITY_CATEGORIES = [
 
 // ─── Project state detection ─────────────────────────────────────
 
-/**
- * Detect the current project environment:
- * - Which AI tool configs already exist
- * - What framework is being used (via package.json)
- * - Whether this is a new or existing project
- */
 export function detectProjectState(cwd) {
   const state = {
     hasPackageJson: existsSync(join(cwd, 'package.json')),
@@ -119,7 +112,6 @@ export function detectProjectState(cwd) {
     existingRules: {},
   };
 
-  // Detect existing AI tool configs
   const toolPaths = {
     claude: 'CLAUDE.md',
     cursor: '.cursor/rules',
@@ -136,7 +128,6 @@ export function detectProjectState(cwd) {
     }
   }
 
-  // Detect framework from package.json dependencies
   if (state.hasPackageJson) {
     try {
       const pkg = JSON.parse(
@@ -159,30 +150,27 @@ export function detectProjectState(cwd) {
   return state;
 }
 
-/**
- * Print a summary of the detected project state
- */
 export function printProjectStatus(state) {
-  console.log('\n📋 Project Status:');
+  console.log(`\n📋 ${t('projectStatus')}`);
 
   if (state.detectedTools.length > 0) {
     const toolNames = state.detectedTools
-      .map((t) => AI_TOOLS.find((a) => a.value === t)?.label || t)
+      .map((tool) => AI_TOOLS.find((a) => a.value === tool)?.label || tool)
       .join(', ');
-    console.log(`  AI tools detected: ${toolNames}`);
+    console.log(`  ${t('toolsDetected')} ${toolNames}`);
   } else {
-    console.log('  No AI tool configs found (new setup)');
+    console.log(`  ${t('noToolsFound')}`);
   }
 
   if (state.detectedFramework) {
     const fwName =
       FRAMEWORKS.find((f) => f.value === state.detectedFramework)?.label ||
       state.detectedFramework;
-    console.log(`  Framework detected: ${fwName}`);
+    console.log(`  ${t('frameworkDetected')} ${fwName}`);
   }
 
   if (!state.hasPackageJson) {
-    console.log('  No package.json found (works fine - rules will be created in current directory)');
+    console.log(`  ${t('noPackageJson')}`);
   }
 }
 
@@ -196,19 +184,18 @@ export async function promptUser(args) {
   const cwd = process.cwd();
   const state = detectProjectState(cwd);
 
-  // --check flag: just show status and exit (must be before auto-mode check)
+  // --check flag
   if (args.includes('--check')) {
     printProjectStatus(state);
-    return null; // Signal to index.js to exit early
+    return null;
   }
 
-  // Non-interactive mode: --yes flag or non-TTY environment
+  // Non-interactive mode
   if (args.includes('--yes') || args.includes('-y') || !isInteractive()) {
     if (!isInteractive() && !args.includes('--yes') && !args.includes('-y')) {
-      console.log('Non-interactive environment detected, using defaults.');
+      console.log(t('nonInteractive'));
     }
 
-    // Smart defaults based on detection
     const tool =
       state.detectedTools.length === 1
         ? state.detectedTools[0]
@@ -225,29 +212,28 @@ export async function promptUser(args) {
   }
 
   // Interactive mode
-  console.log('\n🔒 Secure Coding Rules - OWASP 2025 Security Rules Generator\n');
+  console.log(`\n🔒 ${t('title')}\n`);
   console.log('─'.repeat(55));
   printProjectStatus(state);
 
-  // AI tool selection - highlight detected ones
-  const toolOptions = AI_TOOLS.map((t) => ({
-    ...t,
-    detected: state.detectedTools.includes(t.value),
+  // AI tool selection
+  const toolOptions = AI_TOOLS.map((tool) => ({
+    ...tool,
+    detected: state.detectedTools.includes(tool.value),
   }));
 
-  // If only one tool detected, suggest it first
   if (state.detectedTools.length === 1) {
     const detected = state.detectedTools[0];
-    const idx = toolOptions.findIndex((t) => t.value === detected);
+    const idx = toolOptions.findIndex((tool) => tool.value === detected);
     if (idx > 0) {
       const [item] = toolOptions.splice(idx, 1);
       toolOptions.unshift(item);
     }
   }
 
-  const tool = await selectOne('Which AI coding tool do you use?', toolOptions);
+  const tool = await selectOne(t('selectTool'), toolOptions);
 
-  // Framework selection - auto-suggest detected
+  // Framework selection
   const frameworkOptions = FRAMEWORKS.map((f) => ({
     ...f,
     detected: f.value === state.detectedFramework,
@@ -262,42 +248,28 @@ export async function promptUser(args) {
     }
   }
 
-  const framework = await selectOne(
-    'What is your primary framework?',
-    frameworkOptions
-  );
+  const framework = await selectOne(t('selectFramework'), frameworkOptions);
 
-  // Update or fresh install message
   if (state.existingRules[tool]) {
-    console.log(`\n  ℹ Existing rules found - will update security section only.`);
+    console.log(`\n  ℹ ${t('existingRules')}`);
   }
 
-  const allCategories = await confirm(
-    'Include all OWASP 2025 security categories?'
-  );
+  const allCategories = await confirm(t('includeAll'));
 
   let categories;
   if (allCategories) {
     categories = SECURITY_CATEGORIES.map((c) => c.value);
   } else {
-    categories = await selectMultiple(
-      'Select security categories:',
-      SECURITY_CATEGORIES
-    );
+    categories = await selectMultiple(t('selectCategories'), SECURITY_CATEGORIES);
   }
 
   const includeFrontend =
     framework !== 'node'
-      ? await confirm('Include frontend-specific security rules?')
+      ? await confirm(t('includeFrontend'))
       : false;
 
   if (includeFrontend) {
-    const frontendCats = [
-      'xss-prevention',
-      'csrf-protection',
-      'csp',
-      'secure-state',
-    ];
+    const frontendCats = ['xss-prevention', 'csrf-protection', 'csp', 'secure-state'];
     frontendCats.forEach((c) => {
       if (!categories.includes(c)) categories.push(c);
     });
