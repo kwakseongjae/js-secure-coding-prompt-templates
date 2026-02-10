@@ -12,11 +12,11 @@ const SECTION_START = '<!-- js-secure-coding:start -->';
 const SECTION_END = '<!-- js-secure-coding:end -->';
 
 export function format(templates, options = {}) {
-  const { framework = 'vanilla' } = options;
+  const { framework = 'vanilla', version = '2.0.0' } = options;
   const lines = [];
 
   lines.push(SECTION_START);
-  lines.push('<!-- version: 2.0.0 -->');
+  lines.push(`<!-- version: ${version} -->`);
   lines.push('');
   lines.push('## Security Coding Guidelines (OWASP 2025)');
   lines.push('');

@@ -61,6 +61,7 @@ export async function run() {
     return;
   }
 
+  const dryRun = args.includes('--dry-run');
   const config = await promptUser(args);
 
   // --check returns null to signal early exit
@@ -80,6 +81,11 @@ export async function run() {
 
   const cwd = process.cwd();
   const options = { framework: config.framework, version };
+
+  if (dryRun) {
+    await dryRunPreview(adapter, config, templates, options, cwd);
+    return;
+  }
 
   if (config.tool === 'cursor') {
     await generateMultipleFiles(cursorAdapter, templates, options, cwd);
@@ -134,6 +140,30 @@ async function generateMultipleFiles(adapter, templates, options, cwd) {
   console.log(`\n📝 Generated ${count} files in ${adapter.outputDir}/`);
 }
 
+async function dryRunPreview(adapter, config, templates, options, cwd) {
+  console.log('\n── Dry Run Preview ──────────────────────────────────');
+  console.log(`Tool:       ${adapter.name}`);
+  console.log(`Framework:  ${config.framework}`);
+  console.log(`Categories: ${config.categories.length}`);
+
+  if (config.tool === 'cursor' || config.tool === 'windsurf') {
+    const multiAdapter = config.tool === 'cursor' ? cursorAdapter : windsurfAdapter;
+    const files = multiAdapter.formatMultiple(templates, options);
+    console.log(`\nWould generate ${files.size} files in ${multiAdapter.outputDir}/:`);
+    for (const [filename] of files) {
+      console.log(`  - ${filename}`);
+    }
+  } else {
+    const outputPath = join(cwd, adapter.outputPath);
+    const content = adapter.format(templates, options);
+    const exists = existsSync(outputPath);
+    console.log(`\nWould ${exists ? 'update' : 'create'}: ${adapter.outputPath}`);
+    console.log(`Content size: ${(content.length / 1024).toFixed(1)} KB`);
+  }
+
+  console.log('\n── Run without --dry-run to apply ───────────────────\n');
+}
+
 function printHelp(version) {
   console.log(`
 secure-coding-rules v${version}
@@ -144,10 +174,12 @@ Usage:
   npx secure-coding-rules              Interactive mode (auto-detects project)
   npx secure-coding-rules --yes        Apply all rules with smart defaults
   npx secure-coding-rules --check      Show current project security status
+  npx secure-coding-rules --dry-run    Preview without writing files
 
 Options:
   -y, --yes      Non-interactive mode (auto-detects tool & framework)
   --check        Show which AI tools and frameworks are detected
+  --dry-run      Preview what would be generated without writing
   -h, --help     Show this help
   -v, --version  Show version
 

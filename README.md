@@ -144,6 +144,7 @@ src/templates/
 npx secure-coding-rules              인터랙티브 모드 (자동 감지)
 npx secure-coding-rules --yes        스마트 기본값으로 자동 적용
 npx secure-coding-rules --check      프로젝트 보안 상태 확인
+npx secure-coding-rules --dry-run    미리보기 (파일 생성 없음)
 npx secure-coding-rules --help       도움말
 npx secure-coding-rules --version    버전
 ```
