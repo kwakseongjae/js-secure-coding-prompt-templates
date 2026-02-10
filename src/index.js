@@ -26,7 +26,7 @@ function getVersion() {
     );
     return pkg.version;
   } catch {
-    return '2.0.0';
+    return '2.1.0';
   }
 }
 
@@ -38,11 +38,16 @@ const adapters = {
   agents: agentsAdapter,
 };
 
+// Tools that natively use directory-based output
+const DIRECTORY_NATIVE_TOOLS = ['cursor', 'windsurf'];
+
+// Tools that support optional directory mode
+const DIRECTORY_OPTIONAL_TOOLS = ['claude', 'copilot'];
+
 export async function run() {
   const args = process.argv.slice(2);
   const version = getVersion();
 
-  // Init i18n before anything else
   initLang(args);
 
   if (args.includes('--help') || args.includes('-h')) {
@@ -60,8 +65,6 @@ export async function run() {
 
   if (config === null) return;
 
-  const adapter = adapters[config.tool];
-
   console.log(`\n${t('loading')}`);
   const templates = await loadTemplates(config.categories);
 
@@ -75,22 +78,42 @@ export async function run() {
   const cwd = process.cwd();
   const options = { framework: config.framework, version };
 
-  if (dryRun) {
-    dryRunPreview(adapter, config, templates, options, cwd);
-    return;
+  // Process each selected tool
+  for (const toolName of config.tools) {
+    const adapter = adapters[toolName];
+    if (!adapter) continue;
+
+    if (config.tools.length > 1) {
+      console.log(`\n${t('generatingFor', adapter.name)}`);
+    }
+
+    if (dryRun) {
+      dryRunPreview(adapter, toolName, config, templates, options, cwd);
+      continue;
+    }
+
+    const useDirectory = shouldUseDirectory(toolName, config.outputMode);
+
+    if (useDirectory) {
+      await generateDirectoryMode(adapter, toolName, templates, options, config, cwd);
+    } else if (DIRECTORY_NATIVE_TOOLS.includes(toolName)) {
+      await generateMultipleFiles(adapter, templates, options, cwd);
+    } else {
+      await generateSingleFile(adapter, templates, options, cwd);
+    }
   }
 
-  if (config.tool === 'cursor') {
-    await generateMultipleFiles(cursorAdapter, templates, options, cwd);
-  } else if (config.tool === 'windsurf') {
-    await generateMultipleFiles(windsurfAdapter, templates, options, cwd);
-  } else {
-    await generateSingleFile(adapter, templates, options, cwd);
+  if (!dryRun) {
+    console.log(`\n✅ ${t('success')}`);
+    console.log(`📖 ${t('reference')}`);
+    console.log(`\n${t('runAgain')}\n`);
   }
+}
 
-  console.log(`\n✅ ${t('success')}`);
-  console.log(`📖 ${t('reference')}`);
-  console.log(`\n${t('runAgain')}\n`);
+function shouldUseDirectory(toolName, outputMode) {
+  if (DIRECTORY_NATIVE_TOOLS.includes(toolName)) return false; // cursor/windsurf already directory-based
+  if (DIRECTORY_OPTIONAL_TOOLS.includes(toolName) && outputMode === 'directory') return true;
+  return false;
 }
 
 async function generateSingleFile(adapter, templates, options, cwd) {
@@ -107,10 +130,10 @@ async function generateSingleFile(adapter, templates, options, cwd) {
     const existing = await readFile(outputPath, 'utf-8');
     const merged = adapter.merge(existing, newContent);
     await writeFile(outputPath, merged, 'utf-8');
-    console.log(`\n📝 ${t('updated', adapter.outputPath)}`);
+    console.log(`📝 ${t('updated', adapter.outputPath)}`);
   } else {
     await writeFile(outputPath, newContent, 'utf-8');
-    console.log(`\n📝 ${t('created', adapter.outputPath)}`);
+    console.log(`📝 ${t('created', adapter.outputPath)}`);
   }
 }
 
@@ -130,19 +153,66 @@ async function generateMultipleFiles(adapter, templates, options, cwd) {
     count++;
   }
 
-  console.log(`\n📝 ${t('generated', count, adapter.outputDir)}`);
+  console.log(`📝 ${t('generated', count, adapter.outputDir)}`);
 }
 
-function dryRunPreview(adapter, config, templates, options, cwd) {
-  console.log(`\n── ${t('dryRunTitle')} ──────────────────────────────────`);
-  console.log(`${t('dryRunTool')}       ${adapter.name}`);
+async function generateDirectoryMode(adapter, toolName, templates, options, config, cwd) {
+  // 1. Generate individual rule files in the rules directory
+  const rulesDir = join(cwd, adapter.rulesDir);
+
+  if (!existsSync(rulesDir)) {
+    await mkdir(rulesDir, { recursive: true });
+  }
+
+  const files = adapter.formatMultiple(templates, options);
+  let count = 0;
+
+  for (const [filename, content] of files) {
+    const filePath = join(rulesDir, filename);
+    await writeFile(filePath, content, 'utf-8');
+    count++;
+  }
+
+  console.log(`📝 ${t('generated', count, adapter.rulesDir)}`);
+
+  // 2. Add/update reference in main file
+  const mainPath = join(cwd, adapter.outputPath);
+  const mainDir = dirname(mainPath);
+
+  if (!existsSync(mainDir)) {
+    await mkdir(mainDir, { recursive: true });
+  }
+
+  const refContent = adapter.formatReference(config.categories, options);
+
+  if (existsSync(mainPath) && adapter.merge) {
+    const existing = await readFile(mainPath, 'utf-8');
+    const merged = adapter.merge(existing, refContent);
+    await writeFile(mainPath, merged, 'utf-8');
+    console.log(`📝 ${t('refUpdated', adapter.outputPath)}`);
+  } else {
+    await writeFile(mainPath, refContent, 'utf-8');
+    console.log(`📝 ${t('refCreated', adapter.outputPath)}`);
+  }
+}
+
+function dryRunPreview(adapter, toolName, config, templates, options, cwd) {
+  console.log(`\n── ${t('dryRunTitle')} (${adapter.name}) ──────────────────`);
   console.log(`${t('dryRunFramework')}  ${config.framework}`);
   console.log(`${t('dryRunCategories')} ${config.categories.length}`);
 
-  if (config.tool === 'cursor' || config.tool === 'windsurf') {
-    const multiAdapter = config.tool === 'cursor' ? cursorAdapter : windsurfAdapter;
-    const files = multiAdapter.formatMultiple(templates, options);
-    console.log(`\n${t('dryRunWouldGenerate', files.size, multiAdapter.outputDir)}`);
+  const useDirectory = shouldUseDirectory(toolName, config.outputMode);
+
+  if (useDirectory) {
+    const files = adapter.formatMultiple(templates, options);
+    console.log(`\n${t('dryRunWouldGenerate', files.size, adapter.rulesDir)}`);
+    for (const [filename] of files) {
+      console.log(`  - ${filename}`);
+    }
+    console.log(`\n${t('dryRunWouldUpdate', adapter.outputPath)} (reference only)`);
+  } else if (DIRECTORY_NATIVE_TOOLS.includes(toolName)) {
+    const files = adapter.formatMultiple(templates, options);
+    console.log(`\n${t('dryRunWouldGenerate', files.size, adapter.outputDir)}`);
     for (const [filename] of files) {
       console.log(`  - ${filename}`);
     }
@@ -156,7 +226,7 @@ function dryRunPreview(adapter, config, templates, options, cwd) {
     console.log(t('dryRunSize', (content.length / 1024).toFixed(1)));
   }
 
-  console.log(`\n── ${t('dryRunApply')} ───────────────────\n`);
+  console.log(`── ${t('dryRunApply')} ───────────────────\n`);
 }
 
 function printHelp(version) {
@@ -166,7 +236,7 @@ secure-coding-rules v${version}
 ${t('helpDesc')}
 
 Usage:
-  npx secure-coding-rules              Interactive mode
+  npx secure-coding-rules              Interactive mode (multi-tool select)
   npx secure-coding-rules --yes        Smart defaults
   npx secure-coding-rules --check      Project status
   npx secure-coding-rules --dry-run    Preview
@@ -180,12 +250,17 @@ Options:
   -h, --help     Show this help
   -v, --version  Show version
 
-Supported AI Tools:
-  - Claude Code    → CLAUDE.md
+Output Modes:
+  inline         Embed all rules in main file (e.g. CLAUDE.md)
+  directory      Separate rule files + reference in main file
+                 (e.g. .claude/rules/security-*.md + CLAUDE.md reference)
+
+Supported AI Tools (select multiple):
+  - Claude Code    → CLAUDE.md or .claude/rules/
   - Cursor         → .cursor/rules/*.mdc
   - Windsurf       → .windsurf/rules/*.md
-  - GitHub Copilot → .github/copilot-instructions.md
-  - AGENTS.md      → AGENTS.md (vendor-neutral)
+  - GitHub Copilot → .github/copilot-instructions.md or .github/instructions/
+  - AGENTS.md      → AGENTS.md
 
 OWASP Top 10 2025: A01-A10 + Frontend (XSS, CSRF, CSP, State)
 

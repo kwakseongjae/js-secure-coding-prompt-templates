@@ -196,15 +196,14 @@ export async function promptUser(args) {
       console.log(t('nonInteractive'));
     }
 
-    const tool =
-      state.detectedTools.length === 1
-        ? state.detectedTools[0]
-        : state.detectedTools.includes('claude')
-          ? 'claude'
-          : 'claude';
+    const tools =
+      state.detectedTools.length > 0
+        ? state.detectedTools
+        : ['claude'];
 
     return {
-      tool,
+      tools,
+      outputMode: 'inline',
       framework: state.detectedFramework || 'vanilla',
       categories: SECURITY_CATEGORIES.map((c) => c.value),
       includeFrontend: (state.detectedFramework || 'vanilla') !== 'node',
@@ -216,22 +215,28 @@ export async function promptUser(args) {
   console.log('─'.repeat(55));
   printProjectStatus(state);
 
-  // AI tool selection
+  // AI tool selection (multiple)
   const toolOptions = AI_TOOLS.map((tool) => ({
     ...tool,
     detected: state.detectedTools.includes(tool.value),
   }));
 
-  if (state.detectedTools.length === 1) {
-    const detected = state.detectedTools[0];
-    const idx = toolOptions.findIndex((tool) => tool.value === detected);
-    if (idx > 0) {
-      const [item] = toolOptions.splice(idx, 1);
-      toolOptions.unshift(item);
-    }
-  }
+  const tools = await selectMultiple(t('selectTools'), toolOptions);
 
-  const tool = await selectOne(t('selectTool'), toolOptions);
+  // Output mode selection
+  // Only relevant for tools that support both modes (claude, copilot, agents)
+  const supportsDirectory = tools.some((t) =>
+    ['claude', 'copilot'].includes(t)
+  );
+
+  let outputMode = 'inline';
+  if (supportsDirectory) {
+    const modeOptions = [
+      { label: `${t('outputInline')}`, value: 'inline' },
+      { label: `${t('outputDirectory')}`, value: 'directory' },
+    ];
+    outputMode = await selectOne(t('selectOutputMode'), modeOptions);
+  }
 
   // Framework selection
   const frameworkOptions = FRAMEWORKS.map((f) => ({
@@ -249,10 +254,6 @@ export async function promptUser(args) {
   }
 
   const framework = await selectOne(t('selectFramework'), frameworkOptions);
-
-  if (state.existingRules[tool]) {
-    console.log(`\n  ℹ ${t('existingRules')}`);
-  }
 
   const allCategories = await confirm(t('includeAll'));
 
@@ -275,5 +276,5 @@ export async function promptUser(args) {
     });
   }
 
-  return { tool, framework, categories, includeFrontend };
+  return { tools, outputMode, framework, categories, includeFrontend };
 }

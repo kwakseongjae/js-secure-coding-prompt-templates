@@ -42,6 +42,17 @@ const messages = {
     reference: 'Based on OWASP Top 10 2025 (https://owasp.org/Top10/2025/)',
     runAgain: 'Run again anytime to update: npx secure-coding-rules',
 
+    // Multi-tool
+    selectTools: 'Which AI coding tools do you use?',
+    selectOutputMode: 'Where should security rules be placed?',
+    outputInline: 'Inline (embed in main file)',
+    outputDirectory: 'Directory (separate rule files + reference in main file)',
+    outputInlineDesc: 'e.g. all rules inside CLAUDE.md',
+    outputDirectoryDesc: 'e.g. .claude/rules/security-*.md + brief reference in CLAUDE.md',
+    generatingFor: (tool) => `Generating for ${tool}...`,
+    refUpdated: (f) => `Updated: ${f} (added rules directory reference)`,
+    refCreated: (f) => `Created: ${f} (rules directory reference)`,
+
     // Dry run
     dryRunTitle: 'Dry Run Preview',
     dryRunTool: 'Tool:',
@@ -87,6 +98,16 @@ const messages = {
     success: '보안 룰이 성공적으로 생성되었습니다!',
     reference: 'OWASP Top 10 2025 기반 (https://owasp.org/Top10/2025/)',
     runAgain: '업데이트하려면 다시 실행: npx secure-coding-rules',
+
+    selectTools: '사용할 AI 코딩 도구를 선택하세요:',
+    selectOutputMode: '보안 룰을 어디에 배치할까요?',
+    outputInline: '인라인 (메인 파일에 직접 삽입)',
+    outputDirectory: '디렉토리 (룰 파일 분리 + 메인 파일에 참조)',
+    outputInlineDesc: '예: CLAUDE.md에 모든 룰 포함',
+    outputDirectoryDesc: '예: .claude/rules/security-*.md + CLAUDE.md에 간단 참조',
+    generatingFor: (tool) => `${tool} 생성 중...`,
+    refUpdated: (f) => `업데이트됨: ${f} (룰 디렉토리 참조 추가)`,
+    refCreated: (f) => `생성됨: ${f} (룰 디렉토리 참조)`,
 
     dryRunTitle: '미리보기 (Dry Run)',
     dryRunTool: '도구:',
