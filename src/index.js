@@ -338,6 +338,6 @@ Supported AI Tools (select multiple):
 
 OWASP Top 10 2025: A01-A10 + Frontend (XSS, CSRF, CSP, State)
 
-Homepage: https://github.com/kwakseongjae/js-secure-coding-prompt-templates
+Homepage: https://github.com/kwakseongjae/secure-coding-rules
 `);
 }

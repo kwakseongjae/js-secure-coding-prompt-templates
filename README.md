@@ -1,7 +1,7 @@
 # secure-coding-rules
 
 [![npm version](https://img.shields.io/npm/v/secure-coding-rules.svg)](https://www.npmjs.com/package/secure-coding-rules)
-[![license](https://img.shields.io/npm/l/secure-coding-rules.svg)](https://github.com/kwakseongjae/js-secure-coding-prompt-templates/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/secure-coding-rules.svg)](https://github.com/kwakseongjae/secure-coding-rules/blob/main/LICENSE)
 [![node](https://img.shields.io/node/v/secure-coding-rules.svg)](https://nodejs.org)
 
 Apply **OWASP Top 10 2025** JavaScript/TypeScript security rules to your AI coding assistant with one command.

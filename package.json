@@ -49,11 +49,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kwakseongjae/js-secure-coding-prompt-templates.git"
+    "url": "git+https://github.com/kwakseongjae/secure-coding-rules.git"
   },
-  "homepage": "https://github.com/kwakseongjae/js-secure-coding-prompt-templates#readme",
+  "homepage": "https://github.com/kwakseongjae/secure-coding-rules#readme",
   "bugs": {
-    "url": "https://github.com/kwakseongjae/js-secure-coding-prompt-templates/issues"
+    "url": "https://github.com/kwakseongjae/secure-coding-rules/issues"
   },
   "engines": {
     "node": ">=18.0.0"
